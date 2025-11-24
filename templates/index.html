@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENE.SEARCH//TERMINAL</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --crt-green: #00ff41;
+            --crt-bright: #39ff14;
+            --crt-dark: #001a00;
+            --crt-dim: #003300;
+            --crt-text: #00cc33;
+            --dna-blue: #00ccff;
+            --dna-purple: #cc00ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'VT323', monospace;
+            background: var(--crt-dark);
+            color: var(--crt-green);
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* DNA Background Animation */
+        #dna-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        /* CRT Screen Effect */
+        .crt-container {
+            position: relative;
+            z-index: 1;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .crt-container::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+            animation: scanline 8s linear infinite;
+        }
+
+        .crt-container::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+
+        /* Screen Flicker */
+        @keyframes flicker {
+            0% { opacity: 0.97; }
+            5% { opacity: 0.98; }
+            10% { opacity: 0.96; }
+            15% { opacity: 0.99; }
+            20% { opacity: 0.97; }
+            25% { opacity: 0.98; }
+            30% { opacity: 0.96; }
+            35% { opacity: 0.99; }
+            100% { opacity: 0.97; }
+        }
+
+        .screen {
+            animation: flicker 0.15s infinite;
+        }
+
+        /* Terminal Window */
+        .terminal {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 26, 0, 0.85);
+            border: 3px solid var(--crt-text);
+            border-radius: 10px;
+            box-shadow: 
+                0 0 20px var(--crt-green),
+                inset 0 0 30px rgba(0, 255, 65, 0.1);
+            padding: 30px;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 2px solid var(--crt-text);
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 72px;
+            letter-spacing: 8px;
+            text-shadow: 
+                0 0 10px var(--crt-bright),
+                0 0 20px var(--crt-bright),
+                0 0 30px var(--crt-green);
+            animation: glow 2s ease-in-out infinite alternate;
+            margin-bottom: 10px;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 
+                    0 0 10px var(--crt-bright),
+                    0 0 20px var(--crt-bright),
+                    0 0 30px var(--crt-green);
+            }
+            to {
+                text-shadow: 
+                    0 0 20px var(--crt-bright),
+                    0 0 30px var(--crt-bright),
+                    0 0 40px var(--crt-green),
+                    0 0 50px var(--crt-green);
+            }
+        }
+
+        .header .subtitle {
+            font-size: 24px;
+            color: var(--crt-text);
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 4px;
+        }
+
+        /* Search Section */
+        .search-section {
+            margin: 40px 0;
+        }
+
+        .search-label {
+            font-size: 28px;
+            margin-bottom: 15px;
+            display: block;
+            text-shadow: 0 0 5px var(--crt-green);
+        }
+
+        .search-label::before {
+            content: '> ';
+            color: var(--crt-bright);
+        }
+
+        .search-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .search-input {
+            flex: 1;
+            background: rgba(0, 51, 0, 0.5);
+            border: 2px solid var(--crt-text);
+            color: var(--crt-green);
+            font-family: 'VT323', monospace;
+            font-size: 32px;
+            padding: 15px 20px;
+            outline: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: inset 0 0 10px rgba(0, 255, 65, 0.2);
+            transition: all 0.3s;
+        }
+
+        .search-input::placeholder {
+            color: var(--crt-dim);
+        }
+
+        .search-input:focus {
+            border-color: var(--crt-bright);
+            box-shadow: 
+                inset 0 0 10px rgba(0, 255, 65, 0.3),
+                0 0 15px var(--crt-green);
+        }
+
+        .search-button {
+            background: rgba(0, 51, 0, 0.7);
+            border: 2px solid var(--crt-text);
+            color: var(--crt-bright);
+            font-family: 'VT323', monospace;
+            font-size: 28px;
+            padding: 15px 40px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .search-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .search-button:hover {
+            border-color: var(--crt-bright);
+            box-shadow: 0 0 20px var(--crt-green);
+            text-shadow: 0 0 10px var(--crt-bright);
+        }
+
+        .search-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .loading-text {
+            font-size: 32px;
+            margin-bottom: 15px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 51, 0, 0.5);
+            border: 2px solid var(--crt-text);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                var(--crt-green), 
+                transparent);
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 200%; }
+        }
+
+        /* Results Section */
+        .results {
+            margin-top: 40px;
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-box {
+            background: rgba(0, 51, 0, 0.3);
+            border: 2px solid var(--crt-text);
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        .result-title {
+            font-size: 36px;
+            color: var(--crt-bright);
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px var(--crt-green);
+        }
+
+        .result-field {
+            font-size: 24px;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .result-label {
+            color: var(--dna-blue);
+            text-shadow: 0 0 5px var(--dna-blue);
+        }
+
+        .result-value {
+            color: var(--crt-green);
+        }
+
+        .ai-summary-box {
+            background: rgba(0, 51, 51, 0.4);
+            border-color: var(--dna-blue);
+            box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
+            animation: aiPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes aiPulse {
+            0%, 100% {
+                box-shadow: 0 0 15px rgba(0, 204, 255, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 25px rgba(0, 204, 255, 0.5);
+            }
+        }
+
+        .ai-summary-box .result-title {
+            color: var(--dna-blue);
+            text-shadow: 0 0 10px var(--dna-blue);
+        }
+
+        .ai-summary-text {
+            font-size: 22px !important;
+            line-height: 1.8 !important;
+            color: var(--crt-bright) !important;
+            padding: 10px 0;
+        }
+
+        .error-message {
+            background: rgba(51, 0, 0, 0.5);
+            border: 2px solid #ff0000;
+            color: #ff0000;
+            padding: 20px;
+            font-size: 28px;
+            text-align: center;
+            text-shadow: 0 0 10px #ff0000;
+            animation: errorPulse 0.5s;
+        }
+
+        @keyframes errorPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* System Info */
+        .system-info {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 20px;
+            color: var(--crt-dim);
+            font-family: 'Share Tech Mono', monospace;
+            z-index: 1001;
+        }
+
+        .blinking-cursor {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="screen">
+    <!-- DNA Background Canvas -->
+    <canvas id="dna-canvas"></canvas>
+
+    <div class="crt-container">
+        <div class="terminal">
+            <div class="header">
+                <h1>GENE.SEARCH</h1>
+                <div class="subtitle">BIOLOGICAL DATABASE TERMINAL v2.1</div>
+            </div>
+
+            <div class="search-section">
+                <label class="search-label">ENTER GENE IDENTIFIER</label>
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        id="geneInput" 
+                        class="search-input" 
+                        placeholder="BRCA1, TP53, etc..."
+                        autocomplete="off"
+                    >
+                    <button class="search-button" onclick="searchGene()">
+                        <span>EXECUTE</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="loading-text">ACCESSING DATABASE<span class="blinking-cursor">_</span></div>
+                <div class="loading-bar"></div>
+            </div>
+
+            <div class="results" id="results"></div>
+        </div>
+    </div>
+
+    <div class="system-info">
+        SYSTEM ONLINE // <span id="timestamp"></span>
+    </div>
+
+    <script>
+        // DNA Animation
+        const canvas = document.getElementById('dna-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        class DNAStrand {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.offset = Math.random() * Math.PI * 2;
+                this.speed = 0.02 + Math.random() * 0.02;
+                this.amplitude = 30 + Math.random() * 20;
+            }
+
+            update() {
+                this.offset += this.speed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, 0);
+                
+                // Draw the helix
+                for (let y = 0; y < canvas.height + 100; y += 10) {
+                    const wave1 = Math.sin((y + this.offset * 100) * 0.05) * this.amplitude;
+                    const wave2 = Math.cos((y + this.offset * 100) * 0.05) * this.amplitude;
+                    
+                    // Left strand
+                    ctx.fillStyle = `rgba(0, 204, 255, ${0.3 + Math.sin(this.offset + y * 0.01) * 0.2})`;
+                    ctx.beginPath();
+                    ctx.arc(wave1, y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Right strand
+                    ctx.fillStyle = `rgba(204, 0, 255, ${0.3 + Math.cos(this.offset + y * 0.01) * 0.2})`;
+                    ctx.beginPath();
+                    ctx.arc(wave2, y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Connecting lines
+                    if (Math.abs(wave1 - wave2) < 50) {
+                        ctx.strokeStyle = `rgba(0, 255, 65, ${0.1 + Math.sin(this.offset + y * 0.02) * 0.05})`;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(wave1, y);
+                        ctx.lineTo(wave2, y);
+                        ctx.stroke();
+                    }
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        const strands = [];
+        for (let i = 0; i < 5; i++) {
+            strands.push(new DNAStrand(
+                (canvas.width / 6) * (i + 1),
+                0
+            ));
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(0, 26, 0, 0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            strands.forEach(strand => {
+                strand.update();
+                strand.draw();
+            });
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = 
+                now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        // Gene Search
+        const geneInput = document.getElementById('geneInput');
+        geneInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchGene();
+        });
+
+        async function searchGene() {
+            const geneName = geneInput.value.trim().toUpperCase();
+            if (!geneName) return;
+
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            results.classList.remove('active');
+            results.innerHTML = '';
+            loading.classList.add('active');
+
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ gene_name: geneName })
+                });
+
+                const data = await response.json();
+                loading.classList.remove('active');
+
+                if (data.error) {
+                    displayError(data.error);
+                } else {
+                    displayResults(data);
+                }
+            } catch (error) {
+                loading.classList.remove('active');
+                displayError('CONNECTION ERROR: Unable to reach database');
+            }
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            
+            let html = '<div class="result-box">';
+            html += `<div class="result-title">${data.symbol || 'UNKNOWN'}</div>`;
+            
+            if (data.name) {
+                html += `<div class="result-field"><span class="result-label">NAME:</span> <span class="result-value">${data.name}</span></div>`;
+            }
+            if (data.gene_id) {
+                html += `<div class="result-field"><span class="result-label">GENE_ID:</span> <span class="result-value">${data.gene_id}</span></div>`;
+            }
+            if (data.organism) {
+                html += `<div class="result-field"><span class="result-label">ORGANISM:</span> <span class="result-value">${data.organism}</span></div>`;
+            }
+            if (data.chromosome) {
+                html += `<div class="result-field"><span class="result-label">CHROMOSOME:</span> <span class="result-value">${data.chromosome}</span></div>`;
+            }
+            if (data.location) {
+                html += `<div class="result-field"><span class="result-label">MAP_LOCATION:</span> <span class="result-value">${data.location}</span></div>`;
+            }
+            if (data.gene_type && data.gene_type !== 'Unknown') {
+                html += `<div class="result-field"><span class="result-label">GENE_TYPE:</span> <span class="result-value">${data.gene_type}</span></div>`;
+            }
+            if (data.aliases && data.aliases !== 'None') {
+                html += `<div class="result-field"><span class="result-label">ALIASES:</span> <span class="result-value">${data.aliases}</span></div>`;
+            }
+            if (data.mim_number && data.mim_number !== 'Not available') {
+                html += `<div class="result-field"><span class="result-label">MIM_NUMBER:</span> <span class="result-value">${data.mim_number}</span></div>`;
+            }
+            
+            html += '</div>';
+            
+            // AI Summary Section
+            if (data.ai_summary) {
+                html += '<div class="result-box ai-summary-box">';
+                html += '<div class="result-title">AI ANALYSIS</div>';
+                html += `<div class="result-field ai-summary-text">${data.ai_summary}</div>`;
+                if (data.ai_model) {
+                    html += `<div class="result-field" style="margin-top: 15px; font-size: 18px;"><span class="result-label">MODEL:</span> <span class="result-value">${data.ai_model}</span></div>`;
+                }
+                html += '</div>';
+            }
+            
+            // Full Description Section
+            if (data.description && data.description !== 'No summary available') {
+                html += '<div class="result-box">';
+                html += '<div class="result-title">FULL DESCRIPTION</div>';
+                html += `<div class="result-field"><span class="result-value" style="line-height: 1.8;">${data.description}</span></div>`;
+                html += '</div>';
+            }
+            
+            results.innerHTML = html;
+            results.classList.add('active');
+        }
+
+        function displayError(message) {
+            const results = document.getElementById('results');
+            results.innerHTML = `<div class="error-message">ERROR: ${message}</div>`;
+            results.classList.add('active');
+        }
+    </script>
+</body>
+</html>
