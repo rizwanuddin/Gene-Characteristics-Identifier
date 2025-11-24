@@ -1,0 +1,15 @@
+What this means:
+
+from flask import = "Hey Python, go get me some tools from the Flask toolbox"
+Flask = The main tool to create a web server (like a waiter at a restaurant that takes orders)
+request = A tool to READ what someone is asking for (like reading an order)
+jsonify = A tool to package data nicely to send back (like wrapping food in a box)
+
+
+CORS = Cross-Origin Resource Sharing (fancy name!)
+Simple explanation: This lets your website (frontend) talk to your server (backend) without the browser blocking it
+
+
+requests = A tool to fetch data from the internet
+
+
