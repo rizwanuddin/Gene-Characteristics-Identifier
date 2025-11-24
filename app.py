@@ -8,7 +8,7 @@ load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
 app = Flask(__name__)
-CORS(app)  # Enables frontend (like Streamlit or HTML) to talk to this backend
+CORS(app)  
 
 
 
@@ -72,13 +72,7 @@ def search_gene(gene_name):
 
 
 def create_ai_summary(gene_info):
-    """
-    This function takes gene information and asks an AI model via OpenRouter
-    to create a short, human-readable summary for researchers and clinicians.
-    
-    OpenRouter provides access to multiple models including Claude, GPT-4, and more!
-    """
-    print("Creating AI summary with OpenRouter...")
+    print("Creating AI summary...")
     
     try:
         url = "https://openrouter.ai/api/v1/chat/completions"
@@ -136,17 +130,14 @@ Keep it concise and professional."""
 
 @app.route('/')
 def index():
-    """Serve the retro CRT-themed frontend interface"""
+   
     return render_template('index.html')
 
 
 # Original search endpoint
 @app.route('/search', methods=['POST'])
 def search():
-    """
-    This endpoint handles POST requests from your frontend or Streamlit interface.
-    It expects a JSON object containing { "gene": "<gene_name>" }.
-    """
+  
     print("\n=== New Search Request ===")
     
     # Extract gene name from incoming request
@@ -189,11 +180,8 @@ def search():
 
 @app.route('/api/search', methods=['POST'])
 def api_search():
-    """
-    This endpoint is compatible with the CRT frontend.
-    It expects a JSON object containing { "gene_name": "<gene_name>" }.
-    """
-    print("\n=== CRT Frontend Search Request ===")
+    
+    print("\n=== CRT Frontend Search Request ==")
     
     data = request.get_json()
     gene_name = data.get('gene_name', '').strip().upper()
@@ -233,9 +221,7 @@ def api_search():
 
 @app.route('/test', methods=['GET'])
 def test():
-    """
-    Basic health check route to verify the server is running.
-    """
+    
     return jsonify({
         "status": "Server is running!",
         "message": "Bio Re:code API v1.0",
@@ -250,11 +236,4 @@ def test():
 
 
 if __name__ == '__main__':
-    print("=" * 50)
-    print("🧬 Bio Re:code Server Starting...")
-    print("=" * 50)
-    print("🤖 Using: OpenRouter API (Claude, GPT-4, etc.)")
-    print("📡 Server running at: http://localhost:5000")
-    print("🧪 Test it at: http://localhost:5000/test")
-    print("=" * 50)
     app.run(debug=True, port=5000)
